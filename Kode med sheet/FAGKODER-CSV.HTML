@@ -21,7 +21,7 @@
     let fagkoder = []; // Tom array som fylles etter hvert
 
     // Hent CSV fra GitHub:
-    fetch('43jakchr/Fagkode/Kode med sheet/FAGKODER.CSV') // <-- endre denne til din adresse
+    fetch('https://raw.githubusercontent.com/43jakchr/Fagkode/refs/heads/main/Kode%20med%20sheet/FAGKODER.CSV') // <-- endre denne til din adresse
       .then(response => response.text())
       .then(csvText => {
         // Del opp CSV-teksten til linjer
