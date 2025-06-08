@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Søk etter fag</title>
+  <link href="https://fonts.googleapis.com/css?family=Oswald:400,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Roboto', Arial, sans-serif; margin:2em;}
+    h2 { font-family: 'Oswald', Arial, sans-serif; letter-spacing: 1px; }
+    input { width: 95%; padding: 1em; font-size: 1.2em; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 1em 0; background: #f6f6f6; padding: 1em; border-radius: 8px; }
+    .ingen { color: #888; margin-top:2em;}
+  </style>
+</head>
+<body>
+  <h2>Søk etter fag eller kode</h2>
+  <input type="text" id="sok" placeholder="Skriv fag, kode eller eksamensform...">
+  <ul id="resultat"></ul>
+  <div class="ingen" id="ingen" style="display:none;">Ingen treff – prøv et annet søkeord!</div>
+  <script>
+    const fagkoder = [
+      { fag: "Biologi 1", muntlig: "REA3035", skriftlig: "", dato: "" },
+      { fag: "Biologi 2", muntlig: "REA3037", skriftlig: "REA3036", dato: "2024-05-13" },
+      { fag: "Engelsk", muntlig: "ENG1008", skriftlig: "ENG1007", dato: "2025-05-20" },
+      { fag: "Engelsk for yrkesfag", muntlig: "", skriftlig: "ENG1003", dato: "2025-05-20" },
+      { fag: "Fysikk 1", muntlig: "REA3038", skriftlig: "", dato: "" },
+      { fag: "Fysikk 2", muntlig: "REA3040", skriftlig: "REA3039", dato: "2025-05-21" },
+      { fag: "Geofag 1", muntlig: "REA3042", skriftlig: "", dato: "" },
+      { fag: "Geofag 2", muntlig: "REA3044", skriftlig: "REA3043", dato: "2025-05-23" },
+      { fag: "Historie", muntlig: "HIS1003", skriftlig: "HIS1002", dato: "2025-05-22" },
+      { fag: "Internasjonal engelsk", muntlig: "", skriftlig: "ENG1009", dato: "2025-05-22" },
+      { fag: "Kjemi 1", muntlig: "REA3046", skriftlig: "", dato: "" },
+      { fag: "Kjemi 2", muntlig: "REA3048", skriftlig: "REA3047", dato: "2025-05-23" },
+      { fag: "Kroppsøving", muntlig: "IDR3012", skriftlig: "", dato: "" },
+      { fag: "Matematikk 1P", muntlig: "", skriftlig: "MAT1010", dato: "2025-05-23" },
+      { fag: "Matematikk 1PY", muntlig: "", skriftlig: "MAT1011", dato: "2025-05-23" },
+      { fag: "Matematikk 2P", muntlig: "", skriftlig: "MAT1015", dato: "2025-05-21" },
+      { fag: "Matematikk 2PY", muntlig: "", skriftlig: "MAT1016", dato: "2025-05-21" },
+      { fag: "Matematikk R1", muntlig: "", skriftlig: "REA3022", dato: "2025-05-22" },
+      { fag: "Matematikk R2", muntlig: "", skriftlig: "REA3024", dato: "2025-05-22" },
+      { fag: "Matematikk S1", muntlig: "", skriftlig: "REA3026", dato: "2025-05-23" },
+      { fag: "Matematikk S2", muntlig: "", skriftlig: "REA3028", dato: "2025-05-23" },
+      { fag: "Naturfag", muntlig: "NAT1003", skriftlig: "NAT1002", dato: "2025-05-20" },
+      { fag: "Naturfag påbygg", muntlig: "NAT1005", skriftlig: "NAT1004", dato: "2025-05-20" },
+      // NORSK-FAGENE (for vanlige søk):
+      { fag: "Norsk hovedmål", skriftlig: "NOR1211", dato: "2025-05-19", muntlig: "" },
+      { fag: "Norsk sidemål", skriftlig: "NOR1212", dato: "2025-05-21", muntlig: "" },
+      { fag: "Norsk muntlig", skriftlig: "", dato: "", muntlig: "NOR1213" },
+      { fag: "Norsk påbygg hovedmål", skriftlig: "NOR1270", dato: "2025-05-16", muntlig: "" },
+      { fag: "Norsk påbygg sidemål", skriftlig: "NOR1271", dato: "2025-05-15", muntlig: "" },
+      { fag: "Norsk påbygg muntlig", skriftlig: "", dato: "", muntlig: "NOR1272" },
+      // ...
+      { fag: "Programfag til valg", muntlig: "", skriftlig: "", dato: "" },
+      { fag: "Psykologi 1", muntlig: "SAM3019", skriftlig: "", dato: "" },
+      { fag: "Psykologi 2", muntlig: "SAM3021", skriftlig: "", dato: "" },
+      { fag: "Rettslære 1", muntlig: "SAM3023", skriftlig: "", dato: "" },
+      { fag: "Rettslære 2", muntlig: "SAM3025", skriftlig: "", dato: "" },
+      { fag: "Samfunnskunnskap", muntlig: "SAM3027", skriftlig: "", dato: "" },
+      { fag: "Samfunnsfag", muntlig: "SAM3029", skriftlig: "", dato: "" },
+      { fag: "Sosiologi og sosialantropologi", muntlig: "SAM3031", skriftlig: "", dato: "" },
+      { fag: "Sosialkunnskap", muntlig: "SAM3033", skriftlig: "", dato: "" },
+      { fag: "Økonomistyring 1", muntlig: "", skriftlig: "OKN1002", dato: "2025-05-19" },
+      { fag: "Økonomistyring 2", muntlig: "", skriftlig: "OKN1004", dato: "2025-05-19" },
+      { fag: "Markedsføring og ledelse 1", muntlig: "", skriftlig: "OKN1006", dato: "2025-05-21" },
+      { fag: "Markedsføring og ledelse 2", muntlig: "", skriftlig: "OKN1008", dato: "2025-05-21" },
+      { fag: "Samfunnsøkonomi 1", muntlig: "", skriftlig: "OKN1010", dato: "2025-05-23" },
+      { fag: "Samfunnsøkonomi 2", muntlig: "", skriftlig: "OKN1012", dato: "2025-05-23" },
+      { fag: "Reiseliv og språk 1", muntlig: "", skriftlig: "OKN1014", dato: "2025-05-19" },
+      { fag: "Reiseliv og språk 2", muntlig: "", skriftlig: "OKN1016", dato: "2025-05-19" },
+      { fag: "Entreprenørskap og bedriftsutvikling 1", muntlig: "", skriftlig: "OKN1018", dato: "2025-05-20" },
+      { fag: "Entreprenørskap og bedriftsutvikling 2", muntlig: "", skriftlig: "OKN1020", dato: "2025-05-20" },
+      { fag: "Økonomi og ledelse", muntlig: "", skriftlig: "OKN1022", dato: "2025-05-22" }
+    ];
+
+    function visResultat() {
+      const s = document.getElementById("sok").value.trim().toLowerCase();
+      const resultatElem = document.getElementById("resultat");
+      const ingenElem = document.getElementById("ingen");
+
+      if (!s) {
+        resultatElem.innerHTML = "";
+        ingenElem.style.display = "none";
+        return;
+      }
+
+      // Spesialvisning for "norsk"
+      if (s === "norsk" || s.includes("norsk")) {
+        resultatElem.innerHTML = `
+          <li>
+            <strong>Norsk (studiespesialisering)</strong><br>
+            Skriftlig hovedmål: <b>NOR1211</b> – eksamensdato: <b>2025-05-19</b><br>
+            Skriftlig sidemål: <b>NOR1212</b> – eksamensdato: <b>2025-05-21</b><br>
+            Muntlig: <b>NOR1213</b>
+          </li>
+          <li>
+            <strong>Norsk påbygg</strong><br>
+            Skriftlig hovedmål: <b>NOR1270</b> – eksamensdato: <b>2025-05-16</b><br>
+            Skriftlig sidemål: <b>NOR1271</b> – eksamensdato: <b>2025-05-15</b><br>
+            Muntlig: <b>NOR1272</b>
+          </li>
+        `;
+        ingenElem.style.display = "none";
+        return;
+      }
+
+      // Ellers: vanlig søk
+      const treff = fagkoder.filter(f =>
+        f.fag.toLowerCase().includes(s) ||
+        (f.muntlig && f.muntlig.toLowerCase().includes(s)) ||
+        (f.skriftlig && f.skriftlig.toLowerCase().includes(s)) ||
+        (f.dato && f.dato.toLowerCase().includes(s))
+      );
+
+      resultatElem.innerHTML = treff.map(f =>
+        `<li>
+          <strong>${f.fag}</strong><br>
+          ${f.muntlig ? "Muntlig kode: <b>" + f.muntlig + "</b><br>" : ""}
+          ${f.skriftlig ? "Skriftlig kode: <b>" + f.skriftlig + "</b><br>" : ""}
+          ${f.dato ? "Skriftlig eksamensdato: <b>" + f.dato + "</b>" : ""}
+        </li>`
+      ).join("");
+      ingenElem.style.display = treff.length ? "none" : "block";
+    }
+
+    document.getElementById("sok").addEventListener("input", visResultat);
+  </script>
+</body>
+</html>
