@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Søk etter fag</title>
+  <!-- Font og CSS samme som før ... -->
+  <style>
+    /* ... sammekode som tidligere ... */
+  </style>
+</head>
+<body>
+  <h2>Søk etter fag eller kode</h2>
+  <input type="text" id="sok" placeholder="Skriv fag, kode eller eksamensform...">
+  <ul id="resultat"></ul>
+  <div class="ingen" id="ingen" style="display:none;">Ingen treff – prøv et annet søkeord!</div>
+
+  <script>
+    // Her endres det!
+    // Vi laster inn fagkodelisten fra en ekstern CSV-fil via fetch()
+
+    let fagkoder = []; // Tom array som fylles etter hvert
+
+    // Hent CSV fra GitHub:
+    fetch('https://github.com/43jakchr/Fagkode/blob/main/Kode%20med%20sheet/FAGKODER.CSV') // <-- endre denne til din adresse
+      .then(response => response.text())
+      .then(csvText => {
+        // Del opp CSV-teksten til linjer
+        const lines = csvText.trim().split('\n');
+        const headers = lines[0].split(',');
+        // Gå gjennom hver rad og bygg objekt
+        fagkoder = lines.slice(1).map(line => {
+          const values = line.split(',');
+          let obj = {};
+          headers.forEach((h, i) => obj[h.trim()] = (values[i]||'').trim());
+          return obj;
+        });
+      });
+
+    // Søkefunksjonen er (nesten) som før, men venter på at fagkoder blir fylt
+    function visResultat() {
+      const s = document.getElementById("sok").value.trim().toLowerCase();
+      const resultatElem = document.getElementById("resultat");
+      const ingenElem = document.getElementById("ingen");
+      if (!s) {
+        resultatElem.innerHTML = "";
+        ingenElem.style.display = "none";
+        return;
+      }
+      // Resten av koden kan brukes akkurat som før, men nå med 'fagkoder' fra CSV
+      const treff = fagkoder.filter(f =>
+        f.fag.toLowerCase().includes(s) ||
+        (f.muntlig && f.muntlig.toLowerCase().includes(s)) ||
+        (f.skriftlig1 && f.skriftlig1.toLowerCase().includes(s)) ||
+        (f.skriftlig2 && f.skriftlig2.toLowerCase().includes(s)) ||
+        (f.dato1 && f.dato1.toLowerCase().includes(s)) ||
+        (f.dato2 && f.dato2.toLowerCase().includes(s))
+      );
+      resultatElem.innerHTML = treff.map(f =>
+        `<li>
+          <strong>${f.fag}</strong><br>
+          ${f.muntlig ? "Muntlig: <b>" + f.muntlig + "</b><br>" : ""}
+          ${f.skriftlig1 ? "Skriftlig: <b>" + f.skriftlig1 + "</b>" + (f.dato1 ? " – eksamensdato: <b>" + f.dato1 + "</b>" : "") + "<br>" : ""}
+          ${f.skriftlig2 ? "Skriftlig: <b>" + f.skriftlig2 + "</b>" + (f.dato2 ? " – eksamensdato: <b>" + f.dato2 + "</b>" : "") : ""}
+        </li>`
+      ).join("");
+      ingenElem.style.display = treff.length ? "none" : "block";
+    }
+    document.getElementById("sok").addEventListener("input", visResultat);
+  </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- 
+    Dette er "hodet" på nettsiden. 
+    Her forteller vi nettleseren at vi bruker moderne HTML, og legger inn ting som:
+    - Tegnsett (for å støtte æ, ø, å, osv.)
+    - Tittel (det som vises i nettleserfanen)
+    - Skrifttyper fra Google Fonts
+    - CSS (utseende)
+  -->
+  <meta charset="utf-8">
+  <title>Søk etter fag</title>
+  
+  <!-- Laster inn skrifttypene Oswald og Roboto fra Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Oswald:400,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+
+  <!-- 
+    CSS-stilark: Bestemmer hvordan nettsiden ser ut, farger, skrifter, avstand osv. 
+    Alt inni <style>... </style> gjelder for denne siden.
+  -->
+  <style>
+    /* Gjør at hele nettsiden får Roboto-skrift og litt luft rundt */
+    body { font-family: 'Roboto', Arial, sans-serif; margin:2em;}
+    /* Overskriften (h2) får Oswald-skrift og litt mer luft mellom bokstavene */
+    h2 { font-family: 'Oswald', Arial, sans-serif; letter-spacing: 1px; }
+    /* Søkeruten blir bred og lett å lese */
+    input { width: 95%; padding: 1em; font-size: 1.2em; }
+    /* Fjerner prikker fra resultatlisten */
+    ul { list-style: none; padding: 0; }
+    /* Hvert søkeresultat blir et "kort" med grå bakgrunn og avrundede kanter */
+    li { margin: 1em 0; background: #f6f6f6; padding: 1em; border-radius: 8px; }
+    /* Stilen for "Ingen treff"-meldingen: grå farge, luft over */
+    .ingen { color: #888; margin-top:2em;}
+  </style>
+</head>
+<body>
+  <!--
+    Her starter selve innholdet på nettsiden (det brukeren ser og bruker).
+    Det viktigste er:
+    - En overskrift
+    - Et søkefelt
+    - En tom liste for resultater
+    - En melding for "ingen treff"
+  -->
+  <h2>Søk etter fag eller kode</h2>
+  
+  <!-- Søkefelt der brukeren skriver hva de vil søke etter -->
+  <input type="text" id="sok" placeholder="Skriv fag, kode eller eksamensform...">
+  
+  <!-- Her vises søkeresultatene etterhvert som du skriver -->
+  <ul id="resultat"></ul>
+  
+  <!-- 
+    Denne meldingen vises bare hvis ingen fag/koder ble funnet. 
+    (Den er skjult i starten.)
+  -->
+  <div class="ingen" id="ingen" style="display:none;">Ingen treff – prøv et annet søkeord!</div>
+
+  <!-- 
+    Her starter JavaScript-delen. 
+    Dette er "hjernen" som gjør søkefunksjonen mulig – den følger med på hva du skriver, 
+    søker i listen og viser det riktige resultatet.
+  -->
+  <script>
+    // Dette er en liste over alle fag, med koder og eventuelle eksamensdatoer.
+    // Hvert "fag" er et objekt med felter: navn, muntligkode, skriftligkode(r) og eksamensdato(er).
+    const fagkoder = [
+      { fag: "Biologi 1", muntlig: "REA3035", skriftlig1: "", dato1: "", skriftlig2: "", dato2: "" },
+      { fag: "Biologi 2", muntlig: "REA3037", skriftlig1: "REA3036", dato1: "man. 13.mai", skriftlig2: "", dato2: "" },
+      // ... (her ligger alle fagene, du kan legge til flere om du vil)
+      { fag: "Tysk lll programfag", muntlig: "PSP5843", skriftlig1: "PSP5842", dato1: "man. 12.mai", skriftlig2: "", dato2: "" }
+    ];
+
+    // Dette er funksjonen som kjører hver gang du skriver i søkefeltet
+    function visResultat() {
+      // Henter det brukeren har skrevet inn i søkefeltet, gjør det små bokstaver og fjerner mellomrom foran/bak
+      const s = document.getElementById("sok").value.trim().toLowerCase();
+      // Henter feltet hvor søkeresultatene skal vises
+      const resultatElem = document.getElementById("resultat");
+      // Henter feltet for "ingen treff"-melding
+      const ingenElem = document.getElementById("ingen");
+
+      // Hvis søkefeltet er tomt: fjern alle resultater og skjul "ingen treff"-melding
+      if (!s) {
+        resultatElem.innerHTML = "";
+        ingenElem.style.display = "none";
+        return;
+      }
+
+      // Hvis du søker på "norsk", får du en egen visning som viser begge norskfag med alle detaljer
+      if (s.includes("norsk")) {
+        // Finn alle fag der navnet inneholder "norsk"
+        const norsk = fagkoder.filter(f =>
+          f.fag.toLowerCase().includes("norsk")
+        );
+        // Vis muntlig- og skriftligkoder, med datoer om de finnes
+        resultatElem.innerHTML = norsk.map(f => `
+          <li>
+            <strong>${f.fag}</strong><br>
+            Muntlig: <b>${f.muntlig || "—"}</b><br>
+            Skriftlig: <b>${f.skriftlig1 || "—"}</b> ${f.dato1 ? "– eksamensdato: <b>" + f.dato1 + "</b>" : ""}<br>
+            Skriftlig: <b>${f.skriftlig2 || "—"}</b> ${f.dato2 ? "– eksamensdato: <b>" + f.dato2 + "</b>" : ""}
+          </li>
+        `).join("");
+        // Skjul "ingen treff"-melding hvis vi fant noe, ellers vis den
+        ingenElem.style.display = norsk.length ? "none" : "block";
+        return;
+      }
+
+      // Vanlig søk: Finn alle fag der søkeordet finnes i navnet, koden eller eksamensdatoen
+      const treff = fagkoder.filter(f =>
+        f.fag.toLowerCase().includes(s) ||
+        (f.muntlig && f.muntlig.toLowerCase().includes(s)) ||
+        (f.skriftlig1 && f.skriftlig1.toLowerCase().includes(s)) ||
+        (f.skriftlig2 && f.skriftlig2.toLowerCase().includes(s)) ||
+        (f.dato1 && f.dato1.toLowerCase().includes(s)) ||
+        (f.dato2 && f.dato2.toLowerCase().includes(s))
+      );
+
+      // Bygg opp og vis søkeresultatene under søkefeltet
+      resultatElem.innerHTML = treff.map(f =>
+        `<li>
+          <strong>${f.fag}</strong><br>
+          ${f.muntlig ? "Muntlig: <b>" + f.muntlig + "</b><br>" : ""}
+          ${f.skriftlig1 ? "Skriftlig: <b>" + f.skriftlig1 + "</b>" + (f.dato1 ? " – eksamensdato: <b>" + f.dato1 + "</b>" : "") + "<br>" : ""}
+          ${f.skriftlig2 ? "Skriftlig: <b>" + f.skriftlig2 + "</b>" + (f.dato2 ? " – eksamensdato: <b>" + f.dato2 + "</b>" : "") : ""}
+        </li>`
+      ).join("");
+      // Hvis det ikke var noen treff, vis "ingen treff"-meldingen, ellers skjul den
+      ingenElem.style.display = treff.length ? "none" : "block";
+    }
+
+    // Dette gjør at funksjonen over kjører automatisk hver gang du skriver i søkefeltet
+    document.getElementById("sok").addEventListener("input", visResultat);
+  </script>
+</body>
+</html>
+
