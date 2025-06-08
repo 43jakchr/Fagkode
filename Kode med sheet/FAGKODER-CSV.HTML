@@ -18,38 +18,44 @@
   <div id="laster">Laster inn fagliste...</div>
   <ul id="resultat"></ul>
   <div class="ingen" id="ingen" style="display:none;">Ingen treff – prøv et annet søkeord!</div>
+ 
+ <script>
+    // Sett inn din "raw" CSV-link under
+    const csvUrl = "https://raw.githubusercontent.com/43jakchr/Fagkode/refs/heads/main/Kode%20med%20sheet/FAGKODER.CSV";
 
-  <script>
     let fagkoder = [];
     let dataErLastet = false;
 
-    // Endre denne til din egen raw-link på GitHub!
-    const csvUrl = 'https://raw.githubusercontent.com/43jakchr/Fagkode/refs/heads/main/Kode%20med%20sheet/FAGKODER.CSV';
+    // Hjelpefunksjon for å parse CSV (kun for "rene" CSV-filer)
+    function parseCSV(csvText) {
+      const lines = csvText.trim().split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+      return lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.trim());
+        let obj = {};
+        headers.forEach((h, i) => obj[h] = values[i] || '');
+        return obj;
+      });
+    }
 
+    // Hent og parse CSV
     fetch(csvUrl)
-      .then(response => {
-        if (!response.ok) throw new Error("Kunne ikke laste filen.");
-        return response.text();
+      .then(res => {
+        if (!res.ok) throw new Error("Kunne ikke laste filen.");
+        return res.text();
       })
       .then(csvText => {
-        const lines = csvText.trim().split('\n');
-        const headers = lines[0].split(',').map(h => h.trim());
-        fagkoder = lines.slice(1).map(line => {
-          const values = line.split(',').map(v => v.trim());
-          let obj = {};
-          headers.forEach((h, i) => obj[h] = values[i] || '');
-          return obj;
-        });
+        fagkoder = parseCSV(csvText);
         dataErLastet = true;
         document.getElementById("laster").style.display = "none";
         document.getElementById("sok").disabled = false;
       })
-      .catch(e => {
-        document.getElementById("laster").textContent = "Klarte ikke å laste faglisten!";
+      .catch(err => {
+        document.getElementById("laster").textContent = "Kunne ikke laste faglisten!";
       });
 
     function visResultat() {
-      if (!dataErLastet) return; // Vent til data er klar
+      if (!dataErLastet) return;
       const s = document.getElementById("sok").value.trim().toLowerCase();
       const resultatElem = document.getElementById("resultat");
       const ingenElem = document.getElementById("ingen");
