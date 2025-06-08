@@ -3,41 +3,53 @@
 <head>
   <meta charset="utf-8">
   <title>Søk etter fag</title>
-  <!-- Font og CSS samme som før ... -->
   <style>
-    /* ... sammekode som tidligere ... */
+    body { font-family: 'Roboto', Arial, sans-serif; margin:2em;}
+    h2 { font-family: 'Oswald', Arial, sans-serif; letter-spacing: 1px; }
+    input { width: 95%; padding: 1em; font-size: 1.2em; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 1em 0; background: #f6f6f6; padding: 1em; border-radius: 8px; }
+    .ingen { color: #888; margin-top:2em;}
   </style>
 </head>
 <body>
   <h2>Søk etter fag eller kode</h2>
-  <input type="text" id="sok" placeholder="Skriv fag, kode eller eksamensform...">
+  <input type="text" id="sok" placeholder="Skriv fag, kode eller eksamensform..." disabled>
+  <div id="laster">Laster inn fagliste...</div>
   <ul id="resultat"></ul>
   <div class="ingen" id="ingen" style="display:none;">Ingen treff – prøv et annet søkeord!</div>
 
   <script>
-    // Her endres det!
-    // Vi laster inn fagkodelisten fra en ekstern CSV-fil via fetch()
+    let fagkoder = [];
+    let dataErLastet = false;
 
-    let fagkoder = []; // Tom array som fylles etter hvert
+    // Endre denne til din egen raw-link på GitHub!
+    const csvUrl = 'https://github.com/43jakchr/Fagkode/blob/5c84fa8dd4b37030bc5feaa6828be0d51b8e6580/Kode%20med%20sheet/FAGKODER.CSV';
 
-    // Hent CSV fra GitHub:
-    fetch('https://github.com/43jakchr/Fagkode/blob/d88a11dd1141164b357bb0a3099b4e1bdc806ed0/Kode%20med%20sheet/FAGKODER.CSV') // <-- endre denne til din adresse
-      .then(response => response.text())
+    fetch(csvUrl)
+      .then(response => {
+        if (!response.ok) throw new Error("Kunne ikke laste filen.");
+        return response.text();
+      })
       .then(csvText => {
-        // Del opp CSV-teksten til linjer
         const lines = csvText.trim().split('\n');
-        const headers = lines[0].split(',');
-        // Gå gjennom hver rad og bygg objekt
+        const headers = lines[0].split(',').map(h => h.trim());
         fagkoder = lines.slice(1).map(line => {
-          const values = line.split(',');
+          const values = line.split(',').map(v => v.trim());
           let obj = {};
-          headers.forEach((h, i) => obj[h.trim()] = (values[i]||'').trim());
+          headers.forEach((h, i) => obj[h] = values[i] || '');
           return obj;
         });
+        dataErLastet = true;
+        document.getElementById("laster").style.display = "none";
+        document.getElementById("sok").disabled = false;
+      })
+      .catch(e => {
+        document.getElementById("laster").textContent = "Klarte ikke å laste faglisten!";
       });
 
-    // Søkefunksjonen er (nesten) som før, men venter på at fagkoder blir fylt
     function visResultat() {
+      if (!dataErLastet) return; // Vent til data er klar
       const s = document.getElementById("sok").value.trim().toLowerCase();
       const resultatElem = document.getElementById("resultat");
       const ingenElem = document.getElementById("ingen");
@@ -46,9 +58,8 @@
         ingenElem.style.display = "none";
         return;
       }
-      // Resten av koden kan brukes akkurat som før, men nå med 'fagkoder' fra CSV
       const treff = fagkoder.filter(f =>
-        f.fag.toLowerCase().includes(s) ||
+        (f.fag && f.fag.toLowerCase().includes(s)) ||
         (f.muntlig && f.muntlig.toLowerCase().includes(s)) ||
         (f.skriftlig1 && f.skriftlig1.toLowerCase().includes(s)) ||
         (f.skriftlig2 && f.skriftlig2.toLowerCase().includes(s)) ||
